@@ -27,7 +27,7 @@ void flash_page_fill(rtu_memory_fields_t *rtu_memory_fields)
 
     for(uint8_t i = 0; i < FLASH_PAGE_SIZE_IN_WORDS; ++i)
     {
-        boot_page_fill_safe(rtu_memory_fields->flash_page.words[i], addr);
+        boot_page_fill_safe(addr, rtu_memory_fields->flash_page.words[i]);
         addr += sizeof(uint16_t);
     }
 }
@@ -52,12 +52,9 @@ void dispatch_uninterruptible(rtu_memory_fields_t *rtu_memory_fields)
     if(rtu_memory_fields->flash_page_update)
     {
         rtu_memory_fields->flash_page_update = 0;
-#if 0
         flash_page_fill(rtu_memory_fields);
         flash_page_erase(rtu_memory_fields);
         flash_page_write(rtu_memory_fields);
-#endif
-        rtu_memory_fields->flash_page_updated = 1;
         ++rtu_memory_fields->flash_page_updated_num;
     }
 }
@@ -104,7 +101,8 @@ void exec_bootloader_code(void)
 __attribute__((noreturn))
 void exec_app_code(void)
 {
-    exec_bootloader_code();
+    asm("jmp 0000");
+    for(;;) {}
 }
 
  __attribute__((noreturn))
@@ -126,6 +124,14 @@ void main(void)
     }
     else
     {
+        reset_signature_ = 0xFF;
+
+        /* map interrupt vector table to bootloader flash */
+        {
+            MCUCR = M1(IVCE);
+            MCUCR = M1(IVSEL);
+        }
+
         exec_bootloader_code();
     }
 }

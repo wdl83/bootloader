@@ -12,7 +12,6 @@ CFLAGS += \
 TARGET = bootloader
 CSRCS = \
 		../drv/tmr0.c \
-		../drv/tmr1.c \
 		../drv/usart0.c \
 		../drv/watchdog.c \
 		../modbus-c/atmega328p/rtu_impl.c \
@@ -31,5 +30,8 @@ else
 		../drv/tlog.c \
 		../hw.c
 endif
+
+LDFLAGS += \
+		   -Wl,--section-start=.text=$(BOOTLOADER_FLASH_ADDR)
 
 include ../Makefile.rules

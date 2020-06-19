@@ -40,8 +40,7 @@ typedef struct
     {
         struct
         {
-            uint8_t flash_page_updated : 1;
-            uint8_t reserved_rflags : 7;
+            uint8_t reserved_rflags : 8;
         };
 
         uint8_t rflags;
