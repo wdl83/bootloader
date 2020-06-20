@@ -7,8 +7,8 @@
 #include <modbus-c/rtu.h>
 #include <modbus-c/rtu_memory.h>
 
-#ifndef RTU_ADDR
-#error "Please define RTU_ADDR"
+#ifndef EEPROM_ADDR_RTU_ADDR
+#error "Please define EEPROM_ADDR_RTU_ADDR"
 #endif
 
 #ifndef RTU_ADDR_BASE

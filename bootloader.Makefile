@@ -4,7 +4,7 @@ include ../Makefile.defs
 # avr-gcc -mmcu=atmega328p -Wl,--verbose
 
 CFLAGS += \
-		  -DRTU_ADDR=128 \
+		  -DEEPROM_ADDR_RTU_ADDR=0x0 \
 		  -DRTU_ADDR_BASE=0x2000 \
 		  -DTLOG_SIZE=256 \
 		  -DUSART0_RX_NO_BUFFERING

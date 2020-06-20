@@ -30,7 +30,7 @@ uint8_t *rtu_pdu_cb(
 
     TLOG_PRINTF("S%02" PRIX8 " F%02" PRIX8, addr, fcode);
 
-    if(RTU_ADDR != addr) goto exit;
+    if(modbus_rtu_addr(state) != addr) goto exit;
 
     *dst_begin++ = addr;
 

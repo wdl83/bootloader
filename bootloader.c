@@ -1,4 +1,5 @@
 #include <avr/boot.h>
+#include <avr/eeprom.h>
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
 
@@ -78,6 +79,7 @@ void exec_bootloader_code(void)
 
     modbus_rtu_impl(
         &state,
+        eeprom_read_byte((const uint8_t *)EEPROM_ADDR_RTU_ADDR),
         NULL /* suspend */,
         NULL /* resume */,
         rtu_pdu_cb,
