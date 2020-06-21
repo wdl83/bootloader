@@ -30,8 +30,11 @@ typedef struct
         struct
         {
             uint8_t flash_page_update : 1;
+            uint8_t : 3;
+            uint8_t watchdog_disable : 1;
+            uint8_t watchdog_reset : 1;
+            uint8_t : 1;
             uint8_t reboot : 1;
-            uint8_t reserved_wflags : 6;
         };
         uint8_t wflags;
     };
@@ -40,7 +43,8 @@ typedef struct
     {
         struct
         {
-            uint8_t reserved_rflags : 8;
+            uint8_t watchdog_disabled : 1;
+            uint8_t : 7;
         };
 
         uint8_t rflags;

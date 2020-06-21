@@ -45,9 +45,28 @@ void dispatch_uninterruptible(rtu_memory_fields_t *rtu_memory_fields)
     if(rtu_memory_fields->reboot)
     {
         rtu_memory_fields->reboot = 0;
-        reset_signature_ = RESET_SIGNATURE_BOOT_APP;
-        watchdog_enable(WATCHDOG_TIMEOUT_16ms);
-        for(;;) {/* wait until reset */}
+        {
+            watchdog_enable(WATCHDOG_TIMEOUT_250ms);
+            sei(); /* USART0 async transmission in progress - Modbus reply */
+            for(;;) {/* wait until reset */}
+        }
+    }
+
+    if(rtu_memory_fields->watchdog_reset)
+    {
+        rtu_memory_fields->watchdog_reset = 0;
+        watchdog_reset();
+    }
+
+    if(rtu_memory_fields->watchdog_disable)
+    {
+        rtu_memory_fields->watchdog_disable = 0;
+
+        if(!rtu_memory_fields->watchdog_disabled)
+        {
+            watchdog_disable();
+            rtu_memory_fields->watchdog_disabled = 1;
+        }
     }
 
     if(rtu_memory_fields->flash_page_update)
@@ -87,6 +106,7 @@ void exec_bootloader_code(void)
 
     /* set SMCR SE (Sleep Enable bit) */
     sleep_enable();
+    watchdog_enable(WATCHDOG_TIMEOUT_8000ms);
 
     for(;;)
     {
@@ -110,6 +130,10 @@ void exec_app_code(void)
  __attribute__((noreturn))
 void main(void)
 {
+    const uint8_t mcusr = MCUSR;
+
+    MCUSR &= ~M4(WDRF, BORF, EXTRF, PORF);
+
     /* if System Reset was caused by watchdog - WDRE in MCUSR
      * will re-enable watchdog - so must be disabled to
      * avoid endless watchdog System Reset loop
@@ -117,16 +141,11 @@ void main(void)
      * watchdog is used for reset) */
     watchdog_disable();
 
-    if(RESET_SIGNATURE_BOOT_APP == reset_signature_)
+    if(
+        (mcusr & M3(BORF, EXTRF, PORF))
+        || ((mcusr & M1(WDRF)) && RESET_SIGNATURE_BOOT_APP != reset_signature_))
     {
-        /* reset_signature_ will be overwritten by app code so its state
-           after app execution is undefined */
-        reset_signature_ = 0;
-        exec_app_code();
-    }
-    else
-    {
-        reset_signature_ = 0xFF;
+        reset_signature_ = RESET_SIGNATURE_BOOT_APP;
 
         /* map interrupt vector table to bootloader flash */
         {
@@ -135,6 +154,13 @@ void main(void)
         }
 
         exec_bootloader_code();
+    }
+    else
+    {
+        /* reset_signature_ will be overwritten by app code so its state
+           after app execution is undefined */
+        reset_signature_ = 0;
+        exec_app_code();
     }
 }
 /*-----------------------------------------------------------------------------*/
