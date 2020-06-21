@@ -25,13 +25,13 @@ ifdef RELEASE
 	CFLAGS +=  \
 		-DASSERT_DISABLE \
 		-DTLOG_DISABLE
+
+	LDFLAGS += \
+		-Wl,--section-start=.text=$(BOOTLOADER_FLASH_ADDR)
 else
 	CSRCS += \
 		../drv/tlog.c \
 		../hw.c
 endif
-
-LDFLAGS += \
-		   -Wl,--section-start=.text=$(BOOTLOADER_FLASH_ADDR)
 
 include ../Makefile.rules
