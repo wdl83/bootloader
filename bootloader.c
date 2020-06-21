@@ -1,6 +1,7 @@
 #include <avr/boot.h>
 #include <avr/eeprom.h>
 #include <avr/interrupt.h>
+#include <avr/pgmspace.h>
 #include <avr/sleep.h>
 
 #include <drv/assert.h>
@@ -17,11 +18,13 @@
 uint8_t reset_signature_ __attribute__((section(".noinit")));
 #define RESET_SIGNATURE_BOOT_APP UINT8_C(0xAA)
 /*-----------------------------------------------------------------------------*/
+static
 void flash_page_erase(rtu_memory_fields_t *rtu_memory_fields)
 {
     boot_page_erase_safe(rtu_memory_fields->flash_page_addr);
 }
 
+static
 void flash_page_fill(rtu_memory_fields_t *rtu_memory_fields)
 {
     uint16_t addr = rtu_memory_fields->flash_page_addr;
@@ -33,6 +36,7 @@ void flash_page_fill(rtu_memory_fields_t *rtu_memory_fields)
     }
 }
 
+static
 void flash_page_write(rtu_memory_fields_t *rtu_memory_fields)
 {
     boot_page_write_safe(rtu_memory_fields->flash_page_addr);
@@ -40,7 +44,7 @@ void flash_page_write(rtu_memory_fields_t *rtu_memory_fields)
 }
 /*-----------------------------------------------------------------------------*/
 static
-void dispatch_uninterruptible(rtu_memory_fields_t *rtu_memory_fields)
+void handle_reboot(rtu_memory_fields_t *rtu_memory_fields)
 {
     if(rtu_memory_fields->reboot)
     {
@@ -51,7 +55,11 @@ void dispatch_uninterruptible(rtu_memory_fields_t *rtu_memory_fields)
             for(;;) {/* wait until reset */}
         }
     }
+}
 
+static
+void handle_watchdog(rtu_memory_fields_t *rtu_memory_fields)
+{
     if(rtu_memory_fields->watchdog_reset)
     {
         rtu_memory_fields->watchdog_reset = 0;
@@ -68,15 +76,64 @@ void dispatch_uninterruptible(rtu_memory_fields_t *rtu_memory_fields)
             rtu_memory_fields->watchdog_disabled = 1;
         }
     }
+}
 
+static
+void handle_flash(rtu_memory_fields_t *rtu_memory_fields)
+{
     if(rtu_memory_fields->flash_page_update)
     {
         rtu_memory_fields->flash_page_update = 0;
-        flash_page_fill(rtu_memory_fields);
-        flash_page_erase(rtu_memory_fields);
-        flash_page_write(rtu_memory_fields);
-        ++rtu_memory_fields->flash_page_updated_num;
+
+        if(rtu_memory_fields->flash_page_rnw)
+        {
+            memcpy_P(
+                rtu_memory_fields->flash_page.bytes,
+                (uint16_t *)rtu_memory_fields->flash_page_addr,
+                FLASH_PAGE_SIZE_IN_BYTES);
+            ++rtu_memory_fields->flash_page_rd_num;
+        }
+        else
+        {
+            flash_page_fill(rtu_memory_fields);
+            flash_page_erase(rtu_memory_fields);
+            flash_page_write(rtu_memory_fields);
+            ++rtu_memory_fields->flash_page_wr_num;
+        }
     }
+}
+
+static
+void handle_eeprom(rtu_memory_fields_t *rtu_memory_fields)
+{
+    if(rtu_memory_fields->eeprom_update)
+    {
+        rtu_memory_fields->eeprom_update = 0;
+
+        if(rtu_memory_fields->eeprom_rnw)
+        {
+            rtu_memory_fields->eeprom_data =
+                eeprom_read_byte(
+                    (const uint8_t *)rtu_memory_fields->eeprom_addr);
+            ++rtu_memory_fields->eeprom_rd_num;
+        }
+        else
+        {
+            eeprom_write_byte(
+                (uint8_t *)rtu_memory_fields->eeprom_addr,
+                rtu_memory_fields->eeprom_data);
+            ++rtu_memory_fields->eeprom_wr_num;
+        }
+    }
+}
+
+static
+void dispatch_uninterruptible(rtu_memory_fields_t *rtu_memory_fields)
+{
+    handle_reboot(rtu_memory_fields);
+    handle_watchdog(rtu_memory_fields);
+    handle_flash(rtu_memory_fields);
+    handle_eeprom(rtu_memory_fields);
 }
 
 static
