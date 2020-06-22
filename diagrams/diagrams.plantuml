@@ -1,0 +1,21 @@
+@startuml boot_decision
+start
+: Power-On-Reset;
+
+repeat : Reset;
+
+if (
+Power-On-Reset
+|| External-Reset
+|| Brown-Out-Reset
+|| Watchdog-Trigger in Application
+) then (yes)
+: Bootloader
+"Modbus RTU";
+else (no)
+: Application
+"jmp 0x0000";
+endif
+
+repeat while (Run);
+@enduml
