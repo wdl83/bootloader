@@ -1,0 +1,22 @@
+[
+  {
+    "slave" : 128,
+    "fcode" : 66,
+    "addr" : 8198,
+    "count" : 2,
+    "value" : [0, 0]
+  },
+  {
+    "slave" : 128,
+    "fcode" : 66,
+    "addr" : 8192,
+    "count" : 1,
+    "value" : [3]
+  },
+  {
+    "slave" : 128,
+    "fcode" : 65,
+    "addr" : 8200,
+    "count" : 128
+  }
+]
