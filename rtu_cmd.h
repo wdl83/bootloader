@@ -4,8 +4,8 @@
 
 #include <drv/assert.h>
 #include <hw.h>
-#include <modbus-c/rtu.h>
-#include <modbus-c/rtu_memory.h>
+#include <modbus_c/rtu.h>
+#include <modbus_c/rtu_memory.h>
 
 #ifndef EEPROM_ADDR_RTU_ADDR
 #error "Please define EEPROM_ADDR_RTU_ADDR"
@@ -29,7 +29,7 @@ typedef struct
     {
         struct
         {
-            uint8_t flash_page_update : 1;
+            uint8_t flash_page_update : 1; // LSB
             uint8_t flash_page_rnw: 1;
             uint8_t eeprom_update : 1;
             uint8_t eeprom_rnw : 1;
@@ -61,6 +61,7 @@ typedef struct
     uint16_t eeprom_rd_num;
     uint16_t eeprom_addr;
     uint8_t eeprom_data;
+    uint8_t mcusr;
 
     char tlog[TLOG_SIZE];
 } rtu_memory_fields_t;
@@ -77,8 +78,8 @@ STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, eeprom_wr_num, sizeof(rtu_memor
 STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, eeprom_rd_num, sizeof(rtu_memory_t) + 138);
 STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, eeprom_addr, sizeof(rtu_memory_t) + 140);
 STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, eeprom_data, sizeof(rtu_memory_t) + 142);
-
-STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, tlog, sizeof(rtu_memory_t) + 143);
+STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, mcusr, sizeof(rtu_memory_t) + 143);
+STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, tlog, sizeof(rtu_memory_t) + 144);
 
 void rtu_memory_fields_clear(rtu_memory_fields_t *);
 void rtu_memory_fields_init(rtu_memory_fields_t *);

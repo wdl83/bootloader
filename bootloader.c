@@ -8,15 +8,12 @@
 #include <drv/tlog.h>
 #include <drv/watchdog.h>
 
-#include <modbus-c/atmega328p/rtu_impl.h>
-#include <modbus-c/rtu.h>
+#include <modbus_c/atmega328p/rtu_impl.h>
+#include <modbus_c/rtu.h>
 
 #include "rtu_cmd.h"
+#include "fixed.h"
 
-/* this variable is not initialized by C runtime
- * this enabled to preserve its state across System Resets */
-uint8_t reset_signature_ __attribute__((section(".noinit")));
-#define RESET_SIGNATURE_BOOT_APP UINT8_C(0xAA)
 /*-----------------------------------------------------------------------------*/
 static
 void flash_page_erase(rtu_memory_fields_t *rtu_memory_fields)
@@ -123,17 +120,12 @@ void handle_eeprom(rtu_memory_fields_t *rtu_memory_fields)
 }
 
 static
-void dispatch_uninterruptible(rtu_memory_fields_t *rtu_memory_fields)
+void dispatch(rtu_memory_fields_t *rtu_memory_fields)
 {
     handle_reboot(rtu_memory_fields);
     handle_watchdog(rtu_memory_fields);
     handle_flash(rtu_memory_fields);
     handle_eeprom(rtu_memory_fields);
-}
-
-static
-void dispatch_interruptible(rtu_memory_fields_t *rtu_memory_fields)
-{
 }
 /*-----------------------------------------------------------------------------*/
 __attribute__((noreturn))
@@ -144,9 +136,11 @@ void exec_bootloader_code(void)
 
     rtu_memory_fields_clear(&rtu_memory_fields);
     rtu_memory_fields_init(&rtu_memory_fields);
+    rtu_memory_fields.mcusr = mcusr__;
     TLOG_INIT(rtu_memory_fields.tlog);
 
-    TLOG_PRINTF("RS%02" PRIX8, reset_signature_);
+    TLOG_PRINTF("MCUSR%02" PRIX8, mcusr_);
+    TLOG_PRINTF("RS%02" PRIX8, reset_signature__);
 
     modbus_rtu_impl(
         &state,
@@ -165,9 +159,8 @@ void exec_bootloader_code(void)
         cli(); // disable interrupts
         modbus_rtu_event(&state);
         const bool is_idle = modbus_rtu_idle(&state);
-        if(is_idle) dispatch_uninterruptible(&rtu_memory_fields);
+        if(is_idle) dispatch(&rtu_memory_fields);
         sei(); // enabled interrupts
-        if(is_idle) dispatch_interruptible(&rtu_memory_fields);
         sleep_cpu();
     }
 }
@@ -175,6 +168,7 @@ void exec_bootloader_code(void)
 __attribute__((noreturn))
 void exec_app_code(void)
 {
+    watchdog_enable(WATCHDOG_TIMEOUT_16ms);
     asm("jmp 0000");
     for(;;) {}
 }
@@ -182,22 +176,32 @@ void exec_app_code(void)
  __attribute__((noreturn))
 void main(void)
 {
-    const uint8_t mcusr = MCUSR;
+    mcusr__ = MCUSR;
 
     MCUSR &= ~M4(WDRF, BORF, EXTRF, PORF);
 
-    /* if System Reset was caused by watchdog - WDRE in MCUSR
-     * will re-enable watchdog - so must be disabled to
-     * avoid endless watchdog System Reset loop
+    /* if System Reset was caused by watchdog - WDRE bit in MCUSR
+     * will re-enable watchdog - so watchdog must be disabled to
+     * avoid endless watchdog System Reset loops
      * (because AVR does not have dedicated System Reset instruction
      * watchdog is used for reset) */
     watchdog_disable();
 
+    /* jump to app code ONLY if reset was caused by watchdog and signature is
+     * matching */
     if(
-        (mcusr & M3(BORF, EXTRF, PORF))
-        || ((mcusr & M1(WDRF)) && RESET_SIGNATURE_BOOT_APP != reset_signature_))
+        (mcusr__ & M1(WDRF))
+        && !(mcusr__ & M3(BORF, EXTRF, PORF))
+        && RESET_SIGNATURE_BOOT_APP == reset_signature__)
     {
-        reset_signature_ = RESET_SIGNATURE_BOOT_APP;
+        /* reset_signature__ will be overwritten by app code so its state
+           after app execution is undefined */
+        reset_signature__ = 0;
+        exec_app_code();
+    }
+    else
+    {
+        reset_signature__ = RESET_SIGNATURE_BOOT_APP;
 
         /* map interrupt vector table to bootloader flash */
         {
@@ -207,12 +211,6 @@ void main(void)
 
         exec_bootloader_code();
     }
-    else
-    {
-        /* reset_signature_ will be overwritten by app code so its state
-           after app execution is undefined */
-        reset_signature_ = 0;
-        exec_app_code();
-    }
+
 }
 /*-----------------------------------------------------------------------------*/
