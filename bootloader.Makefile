@@ -54,4 +54,4 @@ include $(DRV_DIR)/Makefile.rules
 clean:
 	cd $(DRV_DIR) && make clean
 	cd ../modbus_c && make clean
-	rm *.bin *.elf *.hex *.lst *.map *.o *.su -f
+	rm *.bin *.elf *.hex *.lst *.map *.o *.su *.stack_usage -f
