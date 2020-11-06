@@ -33,20 +33,20 @@ CSRCS = \
 		fixed.c \
 		rtu_cmd.c
 
+LDFLAGS += \
+		   -Wl,-T atmega328p.ld
+
 ifdef RELEASE
 	CFLAGS +=  \
-		-DASSERT_DISABLE \
-		-DTLOG_DISABLE
+			   -DASSERT_DISABLE \
+			   -DTLOG_DISABLE
 	LDFLAGS += \
-		-Wl,-T atmega328p.ld \
-		-Wl,--section-start=.text=$(BOOTLOADER_FLASH_ADDR)
+			   -Wl,--section-start=.text=$(BOOTLOADER_FLASH_ADDR)
 else
 	CSRCS += \
-		$(DRV_DIR)/drv/tlog.c \
-		$(DRV_DIR)/drv/util.c \
-		$(DRV_DIR)/hw.c
-	LDFLAGS += \
-		-Wl,-T atmega328p.ld
+			 $(DRV_DIR)/drv/tlog.c \
+			 $(DRV_DIR)/drv/util.c \
+			 $(DRV_DIR)/hw.c
 endif
 
 include $(DRV_DIR)/Makefile.rules

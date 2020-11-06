@@ -136,11 +136,11 @@ void exec_bootloader_code(void)
 
     rtu_memory_fields_clear(&rtu_memory_fields);
     rtu_memory_fields_init(&rtu_memory_fields);
-    rtu_memory_fields.mcusr = mcusr__;
+    rtu_memory_fields.mcusr = fixed__.mcusr;
     TLOG_INIT(rtu_memory_fields.tlog);
 
     TLOG_PRINTF("MCUSR%02" PRIX8, mcusr_);
-    TLOG_PRINTF("RS%02" PRIX8, reset_signature__);
+    TLOG_PRINTF("RS%02" PRIX8, fixed__.reset_signature);
 
     modbus_rtu_impl(
         &state,
@@ -176,7 +176,7 @@ void exec_app_code(void)
  __attribute__((noreturn))
 void main(void)
 {
-    mcusr__ = MCUSR;
+    fixed__.mcusr = MCUSR;
 
     MCUSR &= ~M4(WDRF, BORF, EXTRF, PORF);
 
@@ -187,21 +187,23 @@ void main(void)
      * watchdog is used for reset) */
     watchdog_disable();
 
+    ++fixed__.reset_counter;
+
     /* jump to app code ONLY if reset was caused by watchdog and signature is
      * matching */
     if(
-        (mcusr__ & M1(WDRF))
-        && !(mcusr__ & M3(BORF, EXTRF, PORF))
-        && RESET_SIGNATURE_BOOT_APP == reset_signature__)
+        (fixed__.mcusr & M1(WDRF))
+        && !(fixed__.mcusr & M3(BORF, EXTRF, PORF))
+        && RESET_SIGNATURE_BOOT_APP == fixed__.reset_signature)
     {
-        /* reset_signature__ will be overwritten by app code so its state
+        /* reset_signature will be overwritten by app code so its state
            after app execution is undefined */
-        reset_signature__ = 0;
+        fixed__.reset_signature = 0;
         exec_app_code();
     }
     else
     {
-        reset_signature__ = RESET_SIGNATURE_BOOT_APP;
+        fixed__.reset_signature = RESET_SIGNATURE_BOOT_APP;
 
         /* map interrupt vector table to bootloader flash */
         {

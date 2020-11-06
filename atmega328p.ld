@@ -3,12 +3,20 @@
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
    notice and this notice are preserved.  */
+
+/* Modified by Wlodzimierz Lipert
+ * 1. Added .fixed section to SRAM start (before .data section).
+ *    Allows placing data at fixed known address (SRAM start) and avoiding
+ *    reseting it to zero by c-runtime (.bbs section init).
+ * 2. section .data renamed to .mdata because of hardcoded -Tdata 0x800100 in
+ *    specs-atmega328p file provided by avr-gcc-5.4.0 toolchain.
+ */
 OUTPUT_FORMAT("elf32-avr","elf32-avr","elf32-avr")
 OUTPUT_ARCH(avr:5)
 __TEXT_REGION_ORIGIN__ = DEFINED(__TEXT_REGION_ORIGIN__) ? __TEXT_REGION_ORIGIN__ : 0;
-__DATA_REGION_ORIGIN__ = DEFINED(__DATA_REGION_ORIGIN__) ? __DATA_REGION_ORIGIN__ : 0x800060;
+__MDATA_REGION_ORIGIN__ = DEFINED(__MDATA_REGION_ORIGIN__) ? __MDATA_REGION_ORIGIN__ : 0x800100;
 __TEXT_REGION_LENGTH__ = DEFINED(__TEXT_REGION_LENGTH__) ? __TEXT_REGION_LENGTH__ : 128K;
-__DATA_REGION_LENGTH__ = DEFINED(__DATA_REGION_LENGTH__) ? __DATA_REGION_LENGTH__ : 0xffa0;
+__MDATA_REGION_LENGTH__ = DEFINED(__MDATA_REGION_LENGTH__) ? __MDATA_REGION_LENGTH__ : 0xffa0;
 __EEPROM_REGION_LENGTH__ = DEFINED(__EEPROM_REGION_LENGTH__) ? __EEPROM_REGION_LENGTH__ : 64K;
 __FUSE_REGION_LENGTH__ = DEFINED(__FUSE_REGION_LENGTH__) ? __FUSE_REGION_LENGTH__ : 1K;
 __LOCK_REGION_LENGTH__ = DEFINED(__LOCK_REGION_LENGTH__) ? __LOCK_REGION_LENGTH__ : 1K;
@@ -17,7 +25,7 @@ __USER_SIGNATURE_REGION_LENGTH__ = DEFINED(__USER_SIGNATURE_REGION_LENGTH__) ? _
 MEMORY
 {
   text   (rx)   : ORIGIN = __TEXT_REGION_ORIGIN__, LENGTH = __TEXT_REGION_LENGTH__
-  data   (rw!x) : ORIGIN = __DATA_REGION_ORIGIN__, LENGTH = __DATA_REGION_LENGTH__
+  mdata   (rw!x) : ORIGIN = __MDATA_REGION_ORIGIN__, LENGTH = __MDATA_REGION_LENGTH__
   eeprom (rw!x) : ORIGIN = 0x810000, LENGTH = __EEPROM_REGION_LENGTH__
   fuse      (rw!x) : ORIGIN = 0x820000, LENGTH = __FUSE_REGION_LENGTH__
   lock      (rw!x) : ORIGIN = 0x830000, LENGTH = __LOCK_REGION_LENGTH__
@@ -166,9 +174,14 @@ SECTIONS
     KEEP (*(.fini0))
      _etext = . ;
   }  > text
-  .data          :
+  .fixed (NOLOAD) :
   {
-     PROVIDE (__data_start = .) ;
+    *(.fixed*)
+  }  > mdata
+  .mdata :
+  {
+     PROVIDE (__mdata_start = .) ;
+     PROVIDE (__data_start = __mdata_start) ;
     *(.data)
      *(.data*)
     *(.gnu.linkonce.d*)
@@ -177,25 +190,30 @@ SECTIONS
     *(.gnu.linkonce.r*)
     . = ALIGN(2);
      _edata = . ;
-     PROVIDE (__data_end = .) ;
-  }  > data AT> text
-   __data_load_start = LOADADDR(.data);
-   __data_load_end = __data_load_start + SIZEOF(.data);
-  .noinit  ADDR(.data) + SIZEOF (.data)   : AT (ADDR (.noinit))
-  {
-     PROVIDE (__noinit_start = .) ;
-    *(.noinit*)
-     PROVIDE (__noinit_end = .) ;
-  }  > data
-  .bss  ADDR(.noinit) + SIZEOF (.noinit)  :  AT (ADDR (.bss))
+     PROVIDE (__mdata_end = .) ;
+     PROVIDE (__data_end = __mdata_end) ;
+  }  > mdata AT> text
+   __mdata_load_start = LOADADDR(.mdata);
+   __data_load_start = __mdata_load_start;
+   __mdata_load_end = __mdata_load_start + SIZEOF(.mdata);
+   __data_load_end = __mdata_load_end;
+  .bss  ADDR(.mdata) + SIZEOF (.mdata)   : AT (ADDR (.bss))
   {
      PROVIDE (__bss_start = .) ;
     *(.bss)
      *(.bss*)
     *(COMMON)
      PROVIDE (__bss_end = .) ;
+  }  > mdata
+  /* Global data not cleared after reset.  */
+  .noinit  ADDR(.bss) + SIZEOF (.bss)  :  AT (ADDR (.noinit))
+  {
+     PROVIDE (__noinit_start = .) ;
+    *(.noinit*)
+     PROVIDE (__noinit_end = .) ;
      _end = . ;
-  }  > data
+     PROVIDE (__heap_start = .) ;
+  }  > mdata
   .eeprom  :
   {
     /* See .data above...  */
