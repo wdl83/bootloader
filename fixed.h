@@ -17,7 +17,8 @@ typedef union
         uint8_t mcusr;
         uint8_t reset_signature;
         uint8_t reset_counter;
-        uint8_t reserved[FIXED_SIZE - 3];
+        uint8_t panic_counter;
+        uint8_t reserved[FIXED_SIZE - 4];
     };
 
     uint8_t bytes[FIXED_SIZE];
