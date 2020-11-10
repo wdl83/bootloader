@@ -139,7 +139,7 @@ void exec_bootloader_code(void)
     rtu_memory_fields.mcusr = fixed__.mcusr;
     TLOG_INIT(rtu_memory_fields.tlog);
 
-    TLOG_PRINTF("MCUSR%02" PRIX8, mcusr_);
+    TLOG_PRINTF("MCUSR%02" PRIX8, fixed__.mcusr);
     TLOG_PRINTF("RS%02" PRIX8, fixed__.reset_signature);
 
     modbus_rtu_impl(
@@ -187,18 +187,17 @@ void main(void)
      * watchdog is used for reset) */
     watchdog_disable();
 
+    if(fixed__.mcusr & M1(PORF)) fixed__.reset_counter = 0;
+
     ++fixed__.reset_counter;
 
     /* jump to app code ONLY if reset was caused by watchdog and signature is
      * matching */
     if(
         (fixed__.mcusr & M1(WDRF))
-        && !(fixed__.mcusr & M3(BORF, EXTRF, PORF))
         && RESET_SIGNATURE_BOOT_APP == fixed__.reset_signature)
     {
-        /* reset_signature will be overwritten by app code so its state
-           after app execution is undefined */
-        fixed__.reset_signature = 0;
+        fixed__.reset_signature = (uint8_t)~RESET_SIGNATURE_BOOT_APP;
         exec_app_code();
     }
     else

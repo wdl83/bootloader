@@ -24,4 +24,4 @@ typedef union
     uint8_t bytes[FIXED_SIZE];
 } fixed_t;
 
-extern fixed_t fixed__;
+extern volatile fixed_t fixed__;
