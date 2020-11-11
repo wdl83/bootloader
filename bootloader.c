@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include <avr/boot.h>
 #include <avr/eeprom.h>
 #include <avr/interrupt.h>
@@ -46,6 +48,7 @@ void handle_reboot(rtu_memory_fields_t *rtu_memory_fields)
     if(!rtu_memory_fields->reboot) return;
 
     rtu_memory_fields->reboot = 0;
+    fixed__.bootloader_reset_code.curr = RESET_CODE_REBOOT;
     watchdog_enable(WATCHDOG_TIMEOUT_250ms);
     sei(); /* USART0 async transmission in progress - Modbus reply */
     for(;;) {/* wait until reset */}
@@ -120,8 +123,20 @@ void handle_eeprom(rtu_memory_fields_t *rtu_memory_fields)
 }
 
 static
-void dispatch(rtu_memory_fields_t *rtu_memory_fields)
+void handle_rtu_state(modbus_rtu_state_t *state)
 {
+    if(RTU_ERR_REBOOT_THREASHOLD > state->err_cntr) return;
+    fixed__.bootloader_reset_code.curr = RESET_CODE_RTU_ERROR;
+    watchdog_enable(WATCHDOG_TIMEOUT_16ms);
+    for(;;) {/* wait until reset */}
+}
+
+static
+void dispatch(
+    modbus_rtu_state_t *state,
+    rtu_memory_fields_t *rtu_memory_fields)
+{
+    handle_rtu_state(state);
     handle_reboot(rtu_memory_fields);
     handle_watchdog(rtu_memory_fields);
     handle_flash(rtu_memory_fields);
@@ -139,8 +154,8 @@ void exec_bootloader_code(void)
     rtu_memory_fields.mcusr = fixed__.mcusr;
     TLOG_INIT(rtu_memory_fields.tlog);
 
-    TLOG_PRINTF("MCUSR%02" PRIX8, fixed__.mcusr);
-    TLOG_PRINTF("RS%02" PRIX8, fixed__.reset_signature);
+    TLOG_XPRINT2x8("MCUSR|RSTC", fixed__.mcusr, fixed__.reset_counter);
+    TLOG_XPRINT2x8("PNC|APPCNT", fixed__.panic_counter, fixed__.app_counter);
 
     modbus_rtu_impl(
         &state,
@@ -152,6 +167,7 @@ void exec_bootloader_code(void)
 
     /* set SMCR SE (Sleep Enable bit) */
     sleep_enable();
+    fixed__.bootloader_reset_code.curr = RESET_CODE_BOOTLOADER_IDLE;
     watchdog_enable(WATCHDOG_TIMEOUT_8000ms);
 
     for(;;)
@@ -159,7 +175,7 @@ void exec_bootloader_code(void)
         cli(); // disable interrupts
         modbus_rtu_event(&state);
         const bool is_idle = modbus_rtu_idle(&state);
-        if(is_idle) dispatch(&rtu_memory_fields);
+        if(is_idle) dispatch(&state, &rtu_memory_fields);
         sei(); // enabled interrupts
         sleep_cpu();
     }
@@ -168,6 +184,9 @@ void exec_bootloader_code(void)
 __attribute__((noreturn))
 void exec_app_code(void)
 {
+    ++fixed__.app_counter;
+    fixed__.app_reset_code.last = fixed__.app_reset_code.curr;
+    fixed__.app_reset_code.curr = RESET_CODE_APP_EXEC_FAILED;
     watchdog_enable(WATCHDOG_TIMEOUT_16ms);
     asm("jmp 0000");
     for(;;) {}
@@ -187,9 +206,15 @@ void main(void)
      * watchdog is used for reset) */
     watchdog_disable();
 
-    if(fixed__.mcusr & M1(PORF)) fixed__.reset_counter = 0;
+    if(fixed__.mcusr & M1(PORF))
+    {
+        /* if power was lost SRAM state is undefined
+         * (memset/bzero not used because of volatile)*/
+        for(uint8_t i = 0; i < FIXED_SIZE; ++i) fixed__.bytes[i] = 0;
+    }
 
     ++fixed__.reset_counter;
+    fixed__.bootloader_reset_code.last = fixed__.bootloader_reset_code.curr;
 
     /* jump to app code ONLY if reset was caused by watchdog and signature is
      * matching */
@@ -212,6 +237,5 @@ void main(void)
 
         exec_bootloader_code();
     }
-
 }
 /*-----------------------------------------------------------------------------*/
