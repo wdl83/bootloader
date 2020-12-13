@@ -192,7 +192,7 @@ void exec_app_code(void)
     for(;;) {}
 }
 
- __attribute__((noreturn))
+__attribute__((noreturn))
 void main(void)
 {
     fixed__.mcusr = MCUSR;

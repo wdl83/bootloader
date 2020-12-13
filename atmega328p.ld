@@ -94,6 +94,7 @@ SECTIONS
   /* Internal text space or external memory.  */
   .text   :
   {
+     __text_start = . ;
     *(.vectors)
     KEEP(*(.vectors))
     /* For data that needs to reside in the lower 64k of progmem.  */
@@ -173,6 +174,7 @@ SECTIONS
     *(.fini0)  /* Infinite loop after program termination.  */
     KEEP (*(.fini0))
      _etext = . ;
+     __text_end = _etext;
   }  > text
   .fixed (NOLOAD) :
   {
