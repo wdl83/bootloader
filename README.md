@@ -5,4 +5,4 @@
 ![diagram](diagrams/boot_decision.png)
 
 ## author:
-Wlodzimierz Lipert https://github.com/vlad83
+Wlodzimierz Lipert https://github.com/wdl83
