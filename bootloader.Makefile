@@ -1,7 +1,7 @@
 DRV_DIR = atmega328p_drv
 MODBUS_C = modbus_c
 
-CPPFLAGS += -I..
+CPPFLAGS += -I.
 CPPFLAGS += -I$(DRV_DIR)
 
 BOOTLOADER_FLASH_ADDR=0x7000
