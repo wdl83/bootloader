@@ -1,4 +1,5 @@
-DRV_DIR=../atmega328p_drv
+DRV_DIR = atmega328p_drv
+MODBUS_C = modbus_c
 
 CPPFLAGS += -I..
 CPPFLAGS += -I$(DRV_DIR)
@@ -26,10 +27,10 @@ CSRCS = \
 		$(DRV_DIR)/drv/tmr0.c \
 		$(DRV_DIR)/drv/usart0.c \
 		$(DRV_DIR)/drv/watchdog.c \
-		../modbus_c/atmega328p/rtu_impl.c \
-		../modbus_c/crc.c \
-		../modbus_c/rtu.c \
-		../modbus_c/rtu_memory.c \
+		$(MODBUS_C)/atmega328p/rtu_impl.c \
+		$(MODBUS_C)/crc.c \
+		$(MODBUS_C)/rtu.c \
+		$(MODBUS_C)/rtu_memory.c \
 		bootloader.c \
 		fixed.c \
 		rtu_cmd.c
@@ -54,5 +55,5 @@ include $(DRV_DIR)/Makefile.rules
 
 clean:
 	cd $(DRV_DIR) && make clean
-	cd ../modbus_c && make clean
+	cd $(MODBUS_C) && make clean
 	rm *.bin *.elf *.hex *.lst *.map *.o *.su *.stack_usage -f
