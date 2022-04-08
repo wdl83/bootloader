@@ -1,5 +1,6 @@
 DRV_DIR = atmega328p_drv
 MODBUS_C = modbus_c
+OBJ_DIR = obj
 
 CPPFLAGS += -I.
 CPPFLAGS += -I$(DRV_DIR)
@@ -54,6 +55,4 @@ endif
 include $(DRV_DIR)/Makefile.rules
 
 clean:
-	cd $(DRV_DIR) && make clean
-	cd $(MODBUS_C) && make clean
-	rm *.bin *.elf *.hex *.lst *.map *.o *.su *.stack_usage -f
+	rm $(OBJ_DIR) -rf
