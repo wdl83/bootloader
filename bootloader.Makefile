@@ -1,13 +1,13 @@
-DRV_DIR = atmega328p_drv
+DRV = atmega328p_drv
 MODBUS_C = modbus_c
 OBJ_DIR = obj
 
 CPPFLAGS += -I.
-CPPFLAGS += -I$(DRV_DIR)
+CPPFLAGS += -I$(DRV)
 
 BOOTLOADER_FLASH_ADDR=0x7000
 
-include $(DRV_DIR)/Makefile.defs
+include $(DRV)/Makefile.defs
 
 # get default linker script for target MCU
 # avr-gcc -mmcu=atmega328p -Wl,--verbose
@@ -25,9 +25,9 @@ CFLAGS += \
 
 TARGET = bootloader
 CSRCS = \
-		$(DRV_DIR)/drv/tmr0.c \
-		$(DRV_DIR)/drv/usart0.c \
-		$(DRV_DIR)/drv/watchdog.c \
+		$(DRV)/drv/tmr0.c \
+		$(DRV)/drv/usart0.c \
+		$(DRV)/drv/watchdog.c \
 		$(MODBUS_C)/atmega328p/rtu_impl.c \
 		$(MODBUS_C)/crc.c \
 		$(MODBUS_C)/rtu.c \
@@ -47,12 +47,12 @@ ifdef RELEASE
 			   -Wl,--section-start=.text=$(BOOTLOADER_FLASH_ADDR)
 else
 	CSRCS += \
-			 $(DRV_DIR)/drv/tlog.c \
-			 $(DRV_DIR)/drv/util.c \
-			 $(DRV_DIR)/hw.c
+			 $(DRV)/drv/tlog.c \
+			 $(DRV)/drv/util.c \
+			 $(DRV)/hw.c
 endif
 
-include $(DRV_DIR)/Makefile.rules
+include $(DRV)/Makefile.rules
 
 clean:
 	rm $(OBJ_DIR) -rf
