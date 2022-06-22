@@ -9,5 +9,5 @@ RUN apt-get install -y avr-libc
 RUN apt-get install -y git
 RUN mkdir -p /home/dev
 WORKDIR /home/dev
-CMD ["/bin/bash", "-c", "git clone https://github.com/wdl83/bootloader; cd bootloader; ./build.sh"]
+CMD ["/bin/bash", "-c", "git clone --recurse-submodules https://github.com/wdl83/bootloader; cd bootloader; RELEASE=1 make"]
 ENTRYPOINT ["dumb-init", "--"]

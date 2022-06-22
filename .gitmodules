@@ -1,0 +1,6 @@
+[submodule "atmega328p_drv"]
+	path = atmega328p_drv
+	url = https://github.com/wdl83/atmega328p_drv
+[submodule "modbus_c"]
+	path = modbus_c
+	url = https://github.com/wdl83/modbus_c
