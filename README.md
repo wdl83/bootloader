@@ -1,4 +1,4 @@
-# AVR bootloader with Modbus RTU support
+AVR bootloader with Modbus RTU support
 ========================================
 
 Overview
@@ -36,8 +36,9 @@ Usage
 -----
 Basic usage scenario will require 2 additional components:
 
-1. [MDP Broker](https://github.com/wdl83/mdp)
-2. [MDP Client with support for firmware update](https://github.com/wdl83/fwupdate_mdp)
+1. [MDP Broker and Client](https://github.com/wdl83/mdp)
+1. [Modbus MDP Worker](https://github.com/wdl83/modbus_mdp)
+1. [MDP Client with support for firmware update](https://github.com/wdl83/fwupdate_mdp)
 
 Boot sequencing
 ---------------
@@ -49,9 +50,9 @@ In case of power on reset (POR) sequencing will execute **bootloader** code:
 which initializes Modbus RTU state machine, enables **hardware watchdog**
 (with 8 seconds timeout) and waits for RTU commands. In case **hardware watchdog**
 is not disabled via RTU command (or reset every 8 seconds), MCU goes into
-**hardware watchdog** reset (WDRE). In case of **hardware watchdog** reset (WDRE),
+**hardware watchdog** reset (WDRE). After **hardware watchdog** reset (WDRE),
 boot sequencing code checks **reset_signature** and if it matches
-**RESET_SIGNATURE_BOOT_APP** application code is executed.
+**RESET_SIGNATURE_BOOT_APP**, application code is executed.
 
 ```c
     if(
@@ -106,6 +107,28 @@ between **bootloader** and application code. Region is cleared with zeros on POR
 Supported Modbus RTU Commands
 -----------------------------
 
+Quick command summary
+---------------------
+
+Start MDP broker:
+```console
+broker -a tcp://0.0.0.0:6060 &
+```
+Start Modbus MDP worker:
+```console
+master_worker -a tcp://127.0.0.1:6060 -d /dev/ttyUSB0 -s ModbusOverSerial0 
+```
+
+Put device in boot sequencing. If device is executing application code,
+request reset (via application RTU command) or power on/off the device.
+```console
+client -a tcp://127.0.0.1:6060 -s ModbusOverSerial0 -i app_reset_request.json
+```
+
+update device which Modbus address is **slaveID** with firmware from fw.ihex:
+```console
+./fwupdate.elf -a tcp://127.0.0.1:6060 -s ModbusOverSerial0 -f fw.ihex -t slaveID
+```
 
 Boot decision
 -------------
