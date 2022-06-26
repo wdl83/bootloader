@@ -23,7 +23,7 @@ typedef union
 
 typedef struct
 {
-    rtu_memory_t rtu_memory;
+    rtu_memory_header_t header;
 
     union
     {
@@ -66,20 +66,20 @@ typedef struct
     char tlog[TLOG_SIZE];
 } rtu_memory_fields_t;
 
-STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, wflags, sizeof(rtu_memory_t) + 0);
-STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, rflags, sizeof(rtu_memory_t) + 1);
+STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, wflags, sizeof(rtu_memory_header_t) + 0);
+STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, rflags, sizeof(rtu_memory_header_t) + 1);
 
-STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, flash_page_wr_num, sizeof(rtu_memory_t) + 2);
-STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, flash_page_rd_num, sizeof(rtu_memory_t) + 4);
-STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, flash_page_addr, sizeof(rtu_memory_t) + 6);
-STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, flash_page, sizeof(rtu_memory_t) + 8);
+STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, flash_page_wr_num, sizeof(rtu_memory_header_t) + 2);
+STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, flash_page_rd_num, sizeof(rtu_memory_header_t) + 4);
+STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, flash_page_addr, sizeof(rtu_memory_header_t) + 6);
+STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, flash_page, sizeof(rtu_memory_header_t) + 8);
 
-STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, eeprom_wr_num, sizeof(rtu_memory_t) + 136);
-STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, eeprom_rd_num, sizeof(rtu_memory_t) + 138);
-STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, eeprom_addr, sizeof(rtu_memory_t) + 140);
-STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, eeprom_data, sizeof(rtu_memory_t) + 142);
-STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, mcusr, sizeof(rtu_memory_t) + 143);
-STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, tlog, sizeof(rtu_memory_t) + 144);
+STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, eeprom_wr_num, sizeof(rtu_memory_header_t) + 136);
+STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, eeprom_rd_num, sizeof(rtu_memory_header_t) + 138);
+STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, eeprom_addr, sizeof(rtu_memory_header_t) + 140);
+STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, eeprom_data, sizeof(rtu_memory_header_t) + 142);
+STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, mcusr, sizeof(rtu_memory_header_t) + 143);
+STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, tlog, sizeof(rtu_memory_header_t) + 144);
 
 void rtu_memory_fields_clear(rtu_memory_fields_t *);
 void rtu_memory_fields_init(rtu_memory_fields_t *);

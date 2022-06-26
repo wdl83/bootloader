@@ -45,7 +45,7 @@ Boot sequencing
 In case of power on reset (POR) sequencing will execute **bootloader** code:
 
 ```c
-    exec_bootloader_code();
+exec_bootloader_code();
 ```
 which initializes Modbus RTU state machine, enables **hardware watchdog**
 (with 8 seconds timeout) and waits for RTU commands. In case **hardware watchdog**
@@ -55,13 +55,13 @@ boot sequencing code checks **reset_signature** and if it matches
 **RESET_SIGNATURE_BOOT_APP**, application code is executed.
 
 ```c
-    if(
-        (fixed__.mcusr & M1(WDRF))
-        && RESET_SIGNATURE_BOOT_APP == fixed__.reset_signature)
-    {
-        fixed__.reset_signature = (uint8_t)~RESET_SIGNATURE_BOOT_APP;
-        exec_app_code();
-    }
+if(
+    (fixed__.mcusr & M1(WDRF))
+    && RESET_SIGNATURE_BOOT_APP == fixed__.reset_signature)
+{
+    fixed__.reset_signature = (uint8_t)~RESET_SIGNATURE_BOOT_APP;
+    exec_app_code();
+}
 ```
 
 Clearing **reset_signature** before jump to application code ensures that any
@@ -69,16 +69,16 @@ crash in app code will result in executing **bootloader** code on next
 **hardware watchdog** reset (which is enabled just before jump to app code).
 
 ```c
-    __attribute__((noreturn))
-    void exec_app_code(void)
-    {
-        ++fixed__.app_counter;
-        fixed__.app_reset_code.last = fixed__.app_reset_code.curr;
-        fixed__.app_reset_code.curr = RESET_CODE_APP_EXEC_FAILED;
-        watchdog_enable(WATCHDOG_TIMEOUT_16ms);
-        asm("jmp 0000");
-        for(;;) {}
-    }
+__attribute__((noreturn))
+void exec_app_code(void)
+{
+    ++fixed__.app_counter;
+    fixed__.app_reset_code.last = fixed__.app_reset_code.curr;
+    fixed__.app_reset_code.curr = RESET_CODE_APP_EXEC_FAILED;
+    watchdog_enable(WATCHDOG_TIMEOUT_16ms);
+    asm("jmp 0000");
+    for(;;) {}
+}
 ```
 
 Application code is expected to reset **hardware watchdog** every 16ms or disable
@@ -96,12 +96,12 @@ resets (assuming power was not disconnected from device). Its used to pass data
 between **bootloader** and application code. Region is cleared with zeros on POR.
 
 ```c
-    if(fixed__.mcusr & M1(PORF))
-    {
-        /* if power was lost SRAM state is undefined
-         * (memset/bzero not used because of volatile)*/
-        for(uint8_t i = 0; i < FIXED_SIZE; ++i) fixed__.bytes[i] = 0;
-    }
+if(fixed__.mcusr & M1(PORF))
+{
+    /* if power was lost SRAM state is undefined
+     * (memset/bzero not used because of volatile)*/
+    for(uint8_t i = 0; i < FIXED_SIZE; ++i) fixed__.bytes[i] = 0;
+}
 ```
 
 Supported Modbus RTU Commands
@@ -116,7 +116,7 @@ broker -a tcp://0.0.0.0:6060 &
 ```
 Start Modbus MDP worker:
 ```console
-master_worker -a tcp://127.0.0.1:6060 -d /dev/ttyUSB0 -s ModbusOverSerial0 
+master_worker -a tcp://127.0.0.1:6060 -d /dev/ttyUSB0 -s ModbusOverSerial0 &
 ```
 
 Put device in boot sequencing. If device is executing application code,
@@ -127,7 +127,7 @@ client -a tcp://127.0.0.1:6060 -s ModbusOverSerial0 -i app_reset_request.json
 
 update device which Modbus address is **slaveID** with firmware from fw.ihex:
 ```console
-./fwupdate.elf -a tcp://127.0.0.1:6060 -s ModbusOverSerial0 -f fw.ihex -t slaveID
+fwupdate -a tcp://127.0.0.1:6060 -s ModbusOverSerial0 -f fw.ihex -t slaveID
 ```
 
 Boot decision
