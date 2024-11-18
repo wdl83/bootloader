@@ -125,7 +125,7 @@ void handle_eeprom(rtu_memory_fields_t *rtu_memory_fields)
 static
 void handle_rtu_state(modbus_rtu_state_t *state)
 {
-    if(RTU_ERR_REBOOT_THREASHOLD > state->err_cntr) return;
+    if(RTU_ERR_REBOOT_THREASHOLD > state->stats.err_cntr) return;
     fixed__.bootloader_reset_code.curr = RESET_CODE_RTU_ERROR;
     watchdog_enable(WATCHDOG_TIMEOUT_16ms);
     for(;;) {/* wait until reset */}
