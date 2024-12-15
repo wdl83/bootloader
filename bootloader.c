@@ -152,7 +152,7 @@ void exec_bootloader_code(void)
     rtu_memory_fields_clear(&rtu_memory_fields);
     rtu_memory_fields_init(&rtu_memory_fields);
     rtu_memory_fields.mcusr = fixed__.mcusr;
-    TLOG_INIT(rtu_memory_fields.tlog);
+    TLOG_INIT(rtu_memory_fields.tlog, TLOG_SIZE);
 
     TLOG_XPRINT2x8("MCUSR|RSTC", fixed__.mcusr, fixed__.reset_counter);
     TLOG_XPRINT2x8("PNC|APPCNT", fixed__.panic_counter, fixed__.app_counter);

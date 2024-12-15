@@ -1,8 +1,6 @@
 DRV = atmega328p_drv
 MODBUS_C = modbus_c
-ifndef OBJ_DIR
-OBJ_DIR = obj
-endif
+OBJ_DIR ?= obj
 
 
 BOOTLOADER_FLASH_ADDR=0x7000
