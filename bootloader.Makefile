@@ -56,3 +56,6 @@ include $(DRV)/Makefile.rules
 
 clean:
 	rm $(OBJ_DIR) -rf
+
+write_hfuse:
+	avrdude -p atmega328p -P usb -c dragon_isp -U hfuse:w:0x90:m
