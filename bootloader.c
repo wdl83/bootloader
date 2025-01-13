@@ -6,12 +6,12 @@
 #include <avr/pgmspace.h>
 #include <avr/sleep.h>
 
-#include <drv/assert.h>
-#include <drv/tlog.h>
-#include <drv/watchdog.h>
+#include "drv/assert.h"
+#include "drv/tlog.h"
+#include "drv/watchdog.h"
 
-#include <modbus_c/atmega328p/rtu_impl.h>
-#include <modbus_c/rtu.h>
+#include "atmega328p/rtu_impl.h"
+#include "rtu.h"
 
 #include "rtu_cmd.h"
 #include "fixed.h"
@@ -157,11 +157,12 @@ void exec_bootloader_code(void)
     TLOG_XPRINT2x8("MCUSR|RSTC", fixed__.mcusr, fixed__.reset_counter);
     TLOG_XPRINT2x8("PNC|APPCNT", fixed__.panic_counter, fixed__.app_counter);
 
+    rtu_memory_fields.priv.self_addr =
+        eeprom_read_byte((const uint8_t *)EEPROM_ADDR_RTU_ADDR);
+
     modbus_rtu_impl(
         &state,
-        eeprom_read_byte((const uint8_t *)EEPROM_ADDR_RTU_ADDR),
-        NULL /* suspend */,
-        NULL /* resume */,
+        NULL /* suspend */, NULL /* resume */,
         rtu_pdu_cb,
         (uintptr_t)&rtu_memory_fields);
 

@@ -1,4 +1,4 @@
-FROM debian:bullseye
+FROM debian:bookworm
 
 ARG USR
 ARG UID
@@ -11,31 +11,36 @@ ENV GID=${GID}
 #RUN echo "USER ${USR}, uid: ${UID}, gid: ${GID}"
 
 RUN apt-get update
-RUN apt-get install -y dumb-init
-RUN apt-get install -y make
-RUN apt-get install -y binutils-avr
-RUN apt-get install -y gcc-avr
-RUN apt-get install -y avr-libc
-RUN apt-get install -y git
-RUN apt-get clean
+RUN apt-get install -y --no-install-recommends \
+    adduser \
+    avr-libc \
+    binutils-avr \
+    ca-certificates \
+    dumb-init \
+    gcc-avr \
+    git \
+    make \
+    sudo
 
+RUN apt-get clean
 RUN rm -rf /var/lib/apt/lists/*
 
 RUN addgroup --gid ${GID} ${USR}
-
 RUN adduser \
-        --disabled-password \
-        --uid ${UID} \
-        --gid ${GID} \
-        --gecos '' \
-        --shell /bin/bash \
-        --home /home/${USR} \
-        ${USR}
+    --disabled-password \
+    --uid ${UID} \
+    --gid ${GID} \
+    --gecos '' \
+    --shell /bin/bash \
+    --home /home/${USR} \
+    ${USR}
 
+RUN echo "${USR} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 USER ${USR}
 WORKDIR /home/${USR}
 RUN mkdir -p dst
 ENTRYPOINT ["dumb-init", "--"]
+# CMD ["/bin/bash"]
 CMD [ \
     "/bin/bash", \
     "-c", \

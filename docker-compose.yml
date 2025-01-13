@@ -1,17 +1,37 @@
-version: '3.9'
-
 services:
-  dev_env:
+  avr-5.4.0:
+    platform: linux/amd64
+    tty: true
+    stdin_open: true
     build:
       context: .
+      dockerfile: Dockerfile.bookworm
       args:
         USR: ${USR}
         UID: ${UID}
         GID: ${GID}
         DST: ${DST}
     user: ${UID}:${GID}
-    image: avr_bld_env:1.0
-    hostname: avr_bld_env
-    container_name: avr_bld_env
+    image: avr-5.4.0:1.0
+    hostname: avr5.4.0
+    container_name: avr-5.4.0
+    volumes:
+      - ${DST}:/home/${USR}/dst/
+  avr-12.4.0:
+    platform: linux/amd64
+    tty: true
+    stdin_open: true
+    build:
+      context: .
+      dockerfile: Dockerfile.trixie
+      args:
+        USR: ${USR}
+        UID: ${UID}
+        GID: ${GID}
+        DST: ${DST}
+    user: ${UID}:${GID}
+    image: avr-12.4.0:1.0
+    hostname: avr12.4.0
+    container_name: avr-12.4.0
     volumes:
       - ${DST}:/home/${USR}/dst/

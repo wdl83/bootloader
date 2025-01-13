@@ -1,5 +1,5 @@
-DRV = atmega328p_drv
-MODBUS_C = modbus_c
+DRV ?= atmega328p_drv
+MODBUS_C ?= modbus_c
 OBJ_DIR ?= obj
 
 
@@ -20,36 +20,37 @@ CFLAGS += \
 	-DRTU_ERR_REBOOT_THREASHOLD=16 \
 	-DTLOG_SIZE=256 \
 	-DUSART0_RX_NO_BUFFERING \
+	-I . \
 	-I$(DRV) \
-	-I.
+	-I$(MODBUS_C)
 
 TARGET = bootloader
 CSRCS = \
-		$(DRV)/drv/tmr0.c \
-		$(DRV)/drv/usart0.c \
-		$(DRV)/drv/watchdog.c \
-		$(MODBUS_C)/atmega328p/crc.c \
-		$(MODBUS_C)/atmega328p/rtu_impl.c \
-		$(MODBUS_C)/rtu.c \
-		$(MODBUS_C)/rtu_memory.c \
-		bootloader.c \
-		fixed.c \
-		rtu_cmd.c
+	$(DRV)/drv/tmr0.c \
+	$(DRV)/drv/usart0.c \
+	$(DRV)/drv/watchdog.c \
+	$(MODBUS_C)/atmega328p/crc.c \
+	$(MODBUS_C)/atmega328p/rtu_impl.c \
+	$(MODBUS_C)/rtu.c \
+	$(MODBUS_C)/rtu_memory.c \
+	bootloader.c \
+	fixed.c \
+	rtu_cmd.c
 
 LDFLAGS += \
-		   -Wl,-T atmega328p.ld
+	-Wl,-T atmega328p.ld
 
 ifdef RELEASE
 	CFLAGS +=  \
-			   -DASSERT_DISABLE \
-			   -DTLOG_DISABLE
+		-DASSERT_DISABLE \
+		-DTLOG_DISABLE
 	LDFLAGS += \
-			   -Wl,--section-start=.text=$(BOOTLOADER_FLASH_ADDR)
+		-Wl,--section-start=.text=$(BOOTLOADER_FLASH_ADDR)
 else
 	CSRCS += \
-			 $(DRV)/drv/tlog.c \
-			 $(DRV)/drv/util.c \
-			 $(DRV)/hw.c
+		$(DRV)/drv/tlog.c \
+		$(DRV)/drv/util.c \
+		$(DRV)/hw.c
 endif
 
 include $(DRV)/Makefile.rules

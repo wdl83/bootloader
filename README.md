@@ -29,7 +29,7 @@ Building with Docker
 1. git clone https://github.com/wdl83/bootloader
 1. cd bootloader
 1. ./make_env.sh # generate .env
-1. sudo docker-compose up
+1. sudo docker compose up avr-5.4.0 # or avr-12.4.0
 1. grep DST= .env # directory where artifacts are located
 
 Usage

@@ -1,11 +1,13 @@
 #pragma once
 
 #include <stddef.h>
-
-#include <drv/assert.h>
-#include <hw.h>
-#include <modbus_c/rtu.h>
-#include <modbus_c/rtu_memory.h>
+// avr drv
+#include "drv/assert.h"
+#include "drv/util.h"
+#include "hw.h"
+// modbus_c
+#include "rtu.h"
+#include "rtu_memory.h"
 
 #ifndef EEPROM_ADDR_RTU_ADDR
 #error "Please define EEPROM_ADDR_RTU_ADDR"
@@ -23,6 +25,12 @@ typedef union
 
 typedef struct
 {
+    /* begin: private memory (not accessible via rtu_memory_t *) */
+    struct
+    {
+        modbus_rtu_addr_t self_addr;
+    } priv;
+    /* end: private memory */
     rtu_memory_header_t header;
 
     union
@@ -66,20 +74,33 @@ typedef struct
     char tlog[TLOG_SIZE];
 } rtu_memory_fields_t;
 
-STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, wflags, sizeof(rtu_memory_header_t) + 0);
-STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, rflags, sizeof(rtu_memory_header_t) + 1);
+enum
+{
+    RTU_MEM_OFFSET =
+        sizeof_field(rtu_memory_fields_t, priv)
+        + sizeof_field(rtu_memory_fields_t, header)
+};
 
-STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, flash_page_wr_num, sizeof(rtu_memory_header_t) + 2);
-STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, flash_page_rd_num, sizeof(rtu_memory_header_t) + 4);
-STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, flash_page_addr, sizeof(rtu_memory_header_t) + 6);
-STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, flash_page, sizeof(rtu_memory_header_t) + 8);
+#define VALIDATE_RTU_MEM_OFFSET(field, offset) \
+    STATIC_ASSERT_STRUCT_OFFSET( \
+        rtu_memory_fields_t, \
+        field, \
+        sizeof_field(rtu_memory_fields_t, priv) \
+        + sizeof_field(rtu_memory_fields_t, header) \
+        + offset)
 
-STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, eeprom_wr_num, sizeof(rtu_memory_header_t) + 136);
-STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, eeprom_rd_num, sizeof(rtu_memory_header_t) + 138);
-STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, eeprom_addr, sizeof(rtu_memory_header_t) + 140);
-STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, eeprom_data, sizeof(rtu_memory_header_t) + 142);
-STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, mcusr, sizeof(rtu_memory_header_t) + 143);
-STATIC_ASSERT_STRUCT_OFFSET(rtu_memory_fields_t, tlog, sizeof(rtu_memory_header_t) + 144);
+VALIDATE_RTU_MEM_OFFSET(wflags, 0);
+VALIDATE_RTU_MEM_OFFSET(rflags, 1);
+VALIDATE_RTU_MEM_OFFSET(flash_page_wr_num, 2);
+VALIDATE_RTU_MEM_OFFSET(flash_page_rd_num, 4);
+VALIDATE_RTU_MEM_OFFSET(flash_page_addr, 6);
+VALIDATE_RTU_MEM_OFFSET(flash_page, 8);
+VALIDATE_RTU_MEM_OFFSET(eeprom_wr_num, 136);
+VALIDATE_RTU_MEM_OFFSET(eeprom_rd_num, 138);
+VALIDATE_RTU_MEM_OFFSET(eeprom_addr, 140);
+VALIDATE_RTU_MEM_OFFSET(eeprom_data, 142);
+VALIDATE_RTU_MEM_OFFSET(mcusr, 143);
+VALIDATE_RTU_MEM_OFFSET(tlog, 144);
 
 void rtu_memory_fields_clear(rtu_memory_fields_t *);
 void rtu_memory_fields_init(rtu_memory_fields_t *);
@@ -88,7 +109,6 @@ uint8_t *rtu_pdu_cb(
     modbus_rtu_state_t *state,
     modbus_rtu_addr_t addr,
     modbus_rtu_fcode_t fcode,
-    const uint8_t *begin, const uint8_t *end,
-    const uint8_t *curr,
+    const uint8_t *begin, const uint8_t *end, const uint8_t *curr,
     uint8_t *dst_begin, const uint8_t *const dst_end,
     uintptr_t user_data);

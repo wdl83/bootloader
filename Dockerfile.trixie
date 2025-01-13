@@ -1,0 +1,47 @@
+FROM debian:trixie
+
+ARG USR
+ARG UID
+ARG GID
+
+ENV USR=${USR}
+ENV UID=${UID}
+ENV GID=${GID}
+
+#RUN echo "USER ${USR}, uid: ${UID}, gid: ${GID}"
+
+RUN apt-get update
+RUN apt-get install -y --no-install-recommends \
+    adduser \
+    avr-libc \
+    binutils-avr \
+    ca-certificates \
+    dumb-init \
+    gcc-avr \
+    git \
+    make \
+    sudo
+
+RUN apt-get clean
+RUN rm -rf /var/lib/apt/lists/*
+
+RUN addgroup --gid ${GID} ${USR}
+RUN adduser \
+    --disabled-password \
+    --uid ${UID} \
+    --gid ${GID} \
+    --gecos '' \
+    --shell /bin/bash \
+    --home /home/${USR} \
+    ${USR}
+
+RUN echo "${USR} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+USER ${USR}
+WORKDIR /home/${USR}
+RUN mkdir -p dst
+ENTRYPOINT ["dumb-init", "--"]
+# CMD ["/bin/bash"]
+CMD [ \
+    "/bin/bash", \
+    "-c", \
+    "git clone --recurse-submodules https://github.com/wdl83/bootloader; cd bootloader; RELEASE=1 OBJ_DIR=../dst make"]

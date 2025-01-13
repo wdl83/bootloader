@@ -1,9 +1,10 @@
 #include <string.h>
 #include <stddef.h>
-
-#include <drv/tlog.h>
+// avr drv
+#include "drv/tlog.h"
 
 #include "rtu_cmd.h"
+
 
 void rtu_memory_fields_clear(rtu_memory_fields_t *fields)
 {
@@ -30,7 +31,7 @@ uint8_t *rtu_pdu_cb(
 
     //TLOG_XPRINT16("S|F", ((uint16_t)addr << 8) | fcode);
 
-    if(modbus_rtu_addr(state) != addr) goto exit;
+    if(rtu_memory_fields->priv.self_addr != addr) goto exit;
 
     *dst_begin++ = addr;
 
