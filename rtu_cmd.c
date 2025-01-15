@@ -6,6 +6,10 @@
 #include "rtu_cmd.h"
 
 
+#if !defined(RTU_MEMORY_ADDR) || !defined(RTU_MEMORY_SIZE)
+#error "Please define RTU_MEMORY_ADDR and RTU_MEMORY_SIZE"
+#endif
+
 void rtu_memory_fields_clear(rtu_memory_fields_t *fields)
 {
     memset(fields, 0, sizeof(rtu_memory_fields_t));
@@ -13,8 +17,8 @@ void rtu_memory_fields_clear(rtu_memory_fields_t *fields)
 
 void rtu_memory_fields_init(rtu_memory_fields_t *fields)
 {
-    fields->header.addr_begin = RTU_ADDR_BASE;
-    fields->header.addr_end = RTU_ADDR_BASE + sizeof(rtu_memory_fields_t) - sizeof(rtu_memory_header_t);
+    fields->header.addr_begin = RTU_MEMORY_ADDR;
+    fields->header.addr_end = RTU_MEMORY_ADDR + RTU_MEMORY_SIZE;
 }
 
 uint8_t *rtu_pdu_cb(

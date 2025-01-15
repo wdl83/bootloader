@@ -16,6 +16,11 @@
 #include "rtu_cmd.h"
 #include "fixed.h"
 
+
+#ifndef EEPROM_ADDR_RTU_ADDR
+#error "Please define EEPROM_ADDR_RTU_ADDR"
+#endif
+
 /*-----------------------------------------------------------------------------*/
 static
 void flash_page_erase(rtu_memory_fields_t *rtu_memory_fields)

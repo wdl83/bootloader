@@ -9,13 +9,6 @@
 #include "rtu.h"
 #include "rtu_memory.h"
 
-#ifndef EEPROM_ADDR_RTU_ADDR
-#error "Please define EEPROM_ADDR_RTU_ADDR"
-#endif
-
-#ifndef RTU_ADDR_BASE
-#error "Please define RTU_ADDR_BASE"
-#endif
 
 typedef union
 {
