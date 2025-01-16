@@ -54,6 +54,8 @@ else
 		$(DRV)/hw.c
 endif
 
+OBJCPFLAGS += -j .mdata
+
 include $(DRV)/Makefile.rules
 
 clean:
